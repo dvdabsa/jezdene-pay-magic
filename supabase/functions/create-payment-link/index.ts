@@ -90,7 +90,7 @@ serve(async (req) => {
 
     const price = await priceResponse.json();
 
-    // Create payment link
+    // Create payment link with metadata that will be passed to payment intent
     const paymentLinkResponse = await fetch('https://api.stripe.com/v1/payment_links', {
       method: 'POST',
       headers: {
@@ -100,6 +100,9 @@ serve(async (req) => {
       body: new URLSearchParams({
         'line_items[0][price]': price.id,
         'line_items[0][quantity]': '1',
+        'payment_intent_data[metadata][seller_account]': seller_account,
+        'payment_intent_data[metadata][platform_fee]': (platformFeeAmount / 100).toString(),
+        'payment_intent_data[metadata][seller_amount]': (sellerAmount / 100).toString(),
         'metadata[seller_account]': seller_account,
         'metadata[platform_fee]': (platformFeeAmount / 100).toString(),
         'metadata[seller_amount]': (sellerAmount / 100).toString(),
