@@ -27,11 +27,19 @@ serve(async (req) => {
       return new Response('Configuration error', { status: 500 });
     }
 
-    // Verify webhook signature (simplified for demo)
-    // In production, you should properly verify the Stripe webhook signature
+    // Verify webhook signature
+    const stripe = await import('https://esm.sh/stripe@14.21.0');
+    const stripeInstance = new stripe.default(stripeSecretKey, {
+      apiVersion: '2023-10-16',
+    });
 
-    // Parse the event
-    const event = JSON.parse(body);
+    let event;
+    try {
+      event = stripeInstance.webhooks.constructEvent(body, signature, webhookSecret);
+    } catch (err) {
+      console.error('Webhook signature verification failed:', err);
+      return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+    }
     console.log('Webhook event:', event.type);
 
     // Handle successful payment

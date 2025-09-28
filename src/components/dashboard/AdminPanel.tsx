@@ -45,6 +45,31 @@ export const AdminPanel = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (isAdmin) {
+      // Set up real-time subscription for new transactions
+      const channel = supabase
+        .channel('admin-transactions')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'transactions'
+          },
+          (payload) => {
+            console.log('New transaction received:', payload);
+            fetchAdminData(); // Refresh data when new transaction is added
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [isAdmin]);
+
   const checkAdminStatus = async () => {
     try {
       const { data, error } = await supabase
@@ -84,10 +109,20 @@ export const AdminPanel = () => {
 
       setTransactions(transactionsData || []);
 
-      // Calculate stats
-      const totalFees = transactionsData?.reduce((sum, tx) => sum + tx.platform_fee, 0) || 0;
-      const totalTransactions = transactionsData?.length || 0;
-      const totalVolume = transactionsData?.reduce((sum, tx) => sum + tx.amount_total, 0) || 0;
+      // Calculate stats from ALL completed transactions (not just the limited set)
+      const { data: allTransactions, error: statsError } = await supabase
+        .from('transactions')
+        .select('platform_fee, amount_total')
+        .eq('status', 'completed');
+
+      if (statsError) {
+        console.error('Error fetching transaction stats:', statsError);
+        return;
+      }
+
+      const totalFees = allTransactions?.reduce((sum, tx) => sum + tx.platform_fee, 0) || 0;
+      const totalTransactions = allTransactions?.length || 0;
+      const totalVolume = allTransactions?.reduce((sum, tx) => sum + tx.amount_total, 0) || 0;
 
       setStats({
         total_fees: totalFees,
