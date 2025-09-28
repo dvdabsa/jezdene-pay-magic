@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface PaymentLink {
   id: string;
@@ -20,10 +21,25 @@ interface PaymentLink {
 export const PaymentLinks = () => {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
-  const [sellerAccount, setSellerAccount] = useState("");
   const [loading, setLoading] = useState(false);
   const [paymentLinks, setPaymentLinks] = useState<PaymentLink[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('user_id', user.id)
+          .single();
+        setUserProfile(data);
+      }
+    };
+    fetchUserProfile();
+  }, [user]);
 
   const calculateFees = (amount: number) => {
     const platformFee = Math.round((amount * 0.03 + 0.30) * 100); // 3% + $0.30
@@ -32,10 +48,19 @@ export const PaymentLinks = () => {
   };
 
   const createPaymentLink = async () => {
-    if (!amount || !description || !sellerAccount) {
+    if (!amount || !description) {
       toast({
         title: "Missing Information",
         description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!userProfile?.display_name) {
+      toast({
+        title: "Profile Required",
+        description: "Please set up your profile first",
         variant: "destructive",
       });
       return;
@@ -59,7 +84,7 @@ export const PaymentLinks = () => {
         body: {
           amount: amountNum,
           description,
-          seller_account: sellerAccount,
+          seller_account: userProfile.display_name,
         }
       });
 
@@ -70,7 +95,7 @@ export const PaymentLinks = () => {
         url: data.payment_link.url,
         amount: amountNum,
         description,
-        seller_account: sellerAccount,
+        seller_account: userProfile.display_name,
         created_at: new Date().toISOString(),
       };
 
@@ -84,7 +109,6 @@ export const PaymentLinks = () => {
       // Reset form
       setAmount("");
       setDescription("");
-      setSellerAccount("");
     } catch (error) {
       console.error('Error creating payment link:', error);
       toast({
@@ -131,13 +155,16 @@ export const PaymentLinks = () => {
               />
             </div>
             <div>
-              <Label htmlFor="seller-account">Seller Bank Account</Label>
+              <Label htmlFor="seller-account">Seller Account</Label>
               <Input
                 id="seller-account"
-                placeholder="seller@bank.com or account ID"
-                value={sellerAccount}
-                onChange={(e) => setSellerAccount(e.target.value)}
+                value={userProfile?.display_name || "Loading..."}
+                disabled
+                className="bg-muted"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                This is automatically set to your profile name
+              </p>
             </div>
           </div>
 
