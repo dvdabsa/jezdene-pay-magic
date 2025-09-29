@@ -97,13 +97,10 @@ export const AdminPanel = () => {
   const fetchAdminData = async () => {
     try {
       console.log('Fetching admin data...');
-      // Fetch all transactions with seller profile info
+      // Fetch all transactions
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
-        .select(`
-          *,
-          profiles!seller_user_id(display_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -114,7 +111,26 @@ export const AdminPanel = () => {
         return;
       }
 
-      setTransactions(transactionsData || []);
+      // Get all seller profiles for the transactions
+      const sellerIds = [...new Set(transactionsData.map(t => t.seller_user_id))];
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', sellerIds);
+
+      // Map profiles by user_id for quick lookup
+      const profilesMap = (profilesData || []).reduce((acc, profile) => {
+        acc[profile.user_id] = profile;
+        return acc;
+      }, {} as Record<string, any>);
+
+      // Add profile data to transactions
+      const transactionsWithProfiles = transactionsData.map(transaction => ({
+        ...transaction,
+        seller_profile: profilesMap[transaction.seller_user_id] || { display_name: 'Unknown' }
+      }));
+
+      setTransactions(transactionsWithProfiles);
 
       // Calculate stats from ALL completed transactions (not just the limited set)
       const { data: allTransactions, error: statsError } = await supabase
@@ -229,7 +245,7 @@ export const AdminPanel = () => {
                     {formatDistanceToNow(new Date(transaction.created_at), { addSuffix: true })}
                   </TableCell>
                   <TableCell>
-                    {(transaction as any).profiles?.display_name || 'Unknown'}
+                    {(transaction as any).seller_profile?.display_name || 'Unknown'}
                   </TableCell>
                   <TableCell className="text-sm">
                     {transaction.buyer_email}
