@@ -40,6 +40,7 @@ export const AdminPanel = () => {
   });
 
   useEffect(() => {
+    console.log('AdminPanel useEffect - user:', user?.id);
     if (user) {
       checkAdminStatus();
     }
@@ -153,7 +154,9 @@ export const AdminPanel = () => {
   }
 
   if (!isAdmin) {
-    return (
+  console.log('AdminPanel render - isAdmin:', isAdmin, 'loading:', loading, 'stats:', stats);
+  
+  return (
       <Card>
         <CardContent className="p-8 text-center">
           <h3 className="text-lg font-semibold mb-2">Access Denied</h3>
