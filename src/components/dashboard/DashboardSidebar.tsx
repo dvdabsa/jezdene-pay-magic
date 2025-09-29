@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   BarChart3,
@@ -9,7 +9,11 @@ import {
   DollarSign,
   Bell,
   HelpCircle,
+  Shield,
+  LayoutDashboard,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Sidebar,
   SidebarContent,
@@ -24,10 +28,10 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainItems = [
-  { title: "Overview", url: "/dashboard", icon: BarChart3 },
+  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "Transactions", url: "/dashboard/transactions", icon: CreditCard },
   { title: "Payouts", url: "/dashboard/payouts", icon: DollarSign },
-  { title: "Reports", url: "/dashboard/reports", icon: FileText },
+  { title: "Reports", url: "/dashboard/reports", icon: BarChart3 },
 ];
 
 const settingsItems = [
@@ -39,9 +43,34 @@ const settingsItems = [
 
 export function DashboardSidebar() {
   const { state } = useSidebar();
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
   const collapsed = state === "collapsed";
+
+  useEffect(() => {
+    if (user) {
+      checkAdminStatus();
+    }
+  }, [user]);
+
+  const checkAdminStatus = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user?.id)
+        .eq('role', 'admin')
+        .single();
+
+      if (!error && data) {
+        setIsAdmin(true);
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  };
 
   const isActive = (path: string) => {
     if (path === "/dashboard") {
@@ -63,7 +92,10 @@ export function DashboardSidebar() {
           <div className="flex items-center space-x-2">
             <CreditCard className="h-8 w-8 text-sidebar-primary" />
             {!collapsed && (
-              <h1 className="text-xl font-bold text-sidebar-foreground">Jezdene</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-sidebar-foreground">Jezdene</h1>
+                {isAdmin && <Shield className="h-5 w-5 text-primary" />}
+              </div>
             )}
           </div>
         </div>
