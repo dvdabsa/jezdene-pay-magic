@@ -72,12 +72,15 @@ export const AdminPanel = () => {
 
   const checkAdminStatus = async () => {
     try {
+      console.log('Checking admin status for user:', user?.id);
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user?.id)
         .eq('role', 'admin')
         .single();
+
+      console.log('Admin check result:', { data, error });
 
       if (!error && data) {
         setIsAdmin(true);
@@ -92,6 +95,7 @@ export const AdminPanel = () => {
 
   const fetchAdminData = async () => {
     try {
+      console.log('Fetching admin data...');
       // Fetch all transactions with seller profile info
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
@@ -101,6 +105,8 @@ export const AdminPanel = () => {
         `)
         .order('created_at', { ascending: false })
         .limit(50);
+
+      console.log('Transactions query result:', { transactionsData, transactionsError });
 
       if (transactionsError) {
         console.error('Error fetching transactions:', transactionsError);
@@ -112,17 +118,21 @@ export const AdminPanel = () => {
       // Calculate stats from ALL completed transactions (not just the limited set)
       const { data: allTransactions, error: statsError } = await supabase
         .from('transactions')
-        .select('platform_fee, amount_total')
+        .select('platform_fee, amount_total, stripe_fee')
         .eq('status', 'completed');
+
+      console.log('Stats query result:', { allTransactions, statsError });
 
       if (statsError) {
         console.error('Error fetching transaction stats:', statsError);
         return;
       }
 
-      const totalFees = allTransactions?.reduce((sum, tx) => sum + tx.platform_fee, 0) || 0;
+      const totalFees = allTransactions?.reduce((sum, tx) => sum + (tx.platform_fee || 0), 0) || 0;
       const totalTransactions = allTransactions?.length || 0;
-      const totalVolume = allTransactions?.reduce((sum, tx) => sum + tx.amount_total, 0) || 0;
+      const totalVolume = allTransactions?.reduce((sum, tx) => sum + (tx.amount_total || 0), 0) || 0;
+
+      console.log('Calculated stats:', { totalFees, totalTransactions, totalVolume });
 
       setStats({
         total_fees: totalFees,

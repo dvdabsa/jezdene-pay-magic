@@ -89,8 +89,8 @@ serve(async (req) => {
       // Calculate fees (Stripe fee is approximately 2.9% + $0.30)
       const amountTotal = paymentIntent.amount / 100; // Convert from cents
       const stripeFee = Math.round((amountTotal * 0.029 + 0.30) * 100) / 100;
-      const platformFee = parseFloat(platformFeeStr);
-      const sellerAmount = parseFloat(sellerAmountStr);
+      const platformFee = parseFloat(platformFeeStr) / 100; // Convert from cents
+      const sellerAmount = parseFloat(sellerAmountStr) / 100; // Convert from cents
 
       // Insert transaction record
       const { error: insertError } = await supabase
