@@ -8,10 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 interface BankingInfo {
-  bank_name: string;
-  routing_number: string;
-  account_number: string;
   account_holder_name: string;
+  iban: string;
 }
 
 export const BankingInfo = () => {
@@ -19,10 +17,8 @@ export const BankingInfo = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [bankingInfo, setBankingInfo] = useState<BankingInfo>({
-    bank_name: "",
-    routing_number: "",
-    account_number: "",
     account_holder_name: "",
+    iban: "",
   });
 
   useEffect(() => {
@@ -46,10 +42,8 @@ export const BankingInfo = () => {
 
       if (data) {
         setBankingInfo({
-          bank_name: data.bank_name,
-          routing_number: data.routing_number,
-          account_number: data.account_number,
           account_holder_name: data.account_holder_name,
+          iban: data.iban,
         });
       }
     } catch (error) {
@@ -107,44 +101,22 @@ export const BankingInfo = () => {
       <CardContent className="space-y-4">
         <div className="grid gap-4">
           <div>
-            <Label htmlFor="bank_name">Bank Name</Label>
-            <Input
-              id="bank_name"
-              value={bankingInfo.bank_name}
-              onChange={(e) => handleInputChange('bank_name', e.target.value)}
-              placeholder="Enter your bank name"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="routing_number">Routing Number</Label>
-            <Input
-              id="routing_number"
-              value={bankingInfo.routing_number}
-              onChange={(e) => handleInputChange('routing_number', e.target.value)}
-              placeholder="9-digit routing number"
-              maxLength={9}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="account_number">Account Number</Label>
-            <Input
-              id="account_number"
-              type="password"
-              value={bankingInfo.account_number}
-              onChange={(e) => handleInputChange('account_number', e.target.value)}
-              placeholder="Enter your account number"
-            />
-          </div>
-          
-          <div>
             <Label htmlFor="account_holder_name">Account Holder Name</Label>
             <Input
               id="account_holder_name"
               value={bankingInfo.account_holder_name}
               onChange={(e) => handleInputChange('account_holder_name', e.target.value)}
               placeholder="Name on the account"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="iban">IBAN</Label>
+            <Input
+              id="iban"
+              value={bankingInfo.iban}
+              onChange={(e) => handleInputChange('iban', e.target.value)}
+              placeholder="Enter your IBAN"
             />
           </div>
         </div>

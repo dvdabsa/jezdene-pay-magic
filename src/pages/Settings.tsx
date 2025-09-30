@@ -24,9 +24,7 @@ const Settings = () => {
   });
   const [bankingInfo, setBankingInfo] = useState({
     account_holder_name: '',
-    bank_name: '',
-    routing_number: '',
-    account_number: ''
+    iban: ''
   });
   const [notifications, setNotifications] = useState({
     email_transactions: true,
@@ -69,9 +67,7 @@ const Settings = () => {
       if (bankingData) {
         setBankingInfo({
           account_holder_name: bankingData.account_holder_name || '',
-          bank_name: bankingData.bank_name || '',
-          routing_number: bankingData.routing_number || '',
-          account_number: bankingData.account_number || ''
+          iban: bankingData.iban || ''
         });
       }
     } catch (error) {
@@ -220,7 +216,7 @@ const Settings = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <Label htmlFor="account_holder_name">Account Holder Name</Label>
               <Input
@@ -231,31 +227,12 @@ const Settings = () => {
               />
             </div>
             <div>
-              <Label htmlFor="bank_name">Bank Name</Label>
+              <Label htmlFor="iban">IBAN</Label>
               <Input
-                id="bank_name"
-                value={bankingInfo.bank_name}
-                onChange={(e) => setBankingInfo({...bankingInfo, bank_name: e.target.value})}
-                placeholder="Your bank name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="routing_number">Routing Number</Label>
-              <Input
-                id="routing_number"
-                value={bankingInfo.routing_number}
-                onChange={(e) => setBankingInfo({...bankingInfo, routing_number: e.target.value})}
-                placeholder="9-digit routing number"
-              />
-            </div>
-            <div>
-              <Label htmlFor="account_number">Account Number</Label>
-              <Input
-                id="account_number"
-                value={bankingInfo.account_number}
-                onChange={(e) => setBankingInfo({...bankingInfo, account_number: e.target.value})}
-                placeholder="Your account number"
-                type="password"
+                id="iban"
+                value={bankingInfo.iban}
+                onChange={(e) => setBankingInfo({...bankingInfo, iban: e.target.value})}
+                placeholder="Enter your IBAN"
               />
             </div>
           </div>

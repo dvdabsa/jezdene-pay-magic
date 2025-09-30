@@ -125,31 +125,25 @@ export type Database = {
       seller_banking_info: {
         Row: {
           account_holder_name: string
-          account_number: string
-          bank_name: string
           created_at: string
+          iban: string
           id: string
-          routing_number: string
           updated_at: string
           user_id: string
         }
         Insert: {
           account_holder_name: string
-          account_number: string
-          bank_name: string
           created_at?: string
+          iban: string
           id?: string
-          routing_number: string
           updated_at?: string
           user_id: string
         }
         Update: {
           account_holder_name?: string
-          account_number?: string
-          bank_name?: string
           created_at?: string
+          iban?: string
           id?: string
-          routing_number?: string
           updated_at?: string
           user_id?: string
         }
