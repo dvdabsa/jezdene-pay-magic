@@ -72,12 +72,12 @@ const Payouts = () => {
 
       const totalEarnings = transactions?.reduce((sum, tx) => sum + tx.seller_amount, 0) || 0;
       
-      // Get total already paid out
+      // Get total already paid out or pending
       const { data: payoutData, error: payoutError } = await supabase
         .from('payouts')
         .select('amount')
         .eq('user_id', user?.id)
-        .eq('status', 'completed');
+        .in('status', ['completed', 'pending']);
 
       if (payoutError) {
         console.error('Error fetching completed payouts:', payoutError);
@@ -108,7 +108,69 @@ const Payouts = () => {
     }
 
     try {
-      // In a real implementation, this would trigger a payout process
+      // Get the number of completed transactions for this payout
+      const { data: transactions, error: txError } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('seller_user_id', user?.id)
+        .eq('status', 'completed');
+
+      if (txError) {
+        throw txError;
+      }
+
+      // Calculate next payout date (next Friday)
+      const today = new Date();
+      const nextFriday = new Date(today);
+      nextFriday.setDate(today.getDate() + (5 - today.getDay() + 7) % 7);
+
+      // Create payout record
+      const { error: payoutError } = await supabase
+        .from('payouts')
+        .insert({
+          user_id: user?.id,
+          amount: pendingAmount,
+          status: 'pending',
+          payout_date: nextFriday.toISOString(),
+          transaction_count: transactions?.length || 0
+        });
+
+      if (payoutError) {
+        throw payoutError;
+      }
+
+      // Get user profile for notification
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('user_id', user?.id)
+        .single();
+
+      // Get all admin users to notify
+      const { data: adminUsers } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin');
+
+      // Send notifications to all admins
+      if (adminUsers && adminUsers.length > 0) {
+        const notifications = adminUsers.map(admin => ({
+          user_id: admin.user_id,
+          title: 'New Payout Request',
+          message: `${profile?.display_name || 'A user'} has requested a payout of $${pendingAmount.toFixed(2)}`,
+          type: 'payout_request',
+          action_url: '/dashboard/admin'
+        }));
+
+        await supabase
+          .from('notifications')
+          .insert(notifications);
+      }
+
+      // Refresh the data
+      await fetchPayouts();
+      await calculatePendingAmount();
+
       toast({
         title: "Payout Requested",
         description: "Your payout request has been submitted and will be processed on the next payout date.",
