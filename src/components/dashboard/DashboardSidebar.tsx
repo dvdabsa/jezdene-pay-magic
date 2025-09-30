@@ -26,6 +26,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import jpayLogo from "@/assets/jpay-logo.png";
 
 const mainItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
@@ -90,12 +91,13 @@ export function DashboardSidebar() {
         {/* Logo/Brand */}
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center space-x-2">
-            <CreditCard className="h-8 w-8 text-sidebar-primary" />
-            {!collapsed && (
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-sidebar-foreground">Jezdene</h1>
-                {isAdmin && <Shield className="h-5 w-5 text-primary" />}
-              </div>
+            <img 
+              src={jpayLogo} 
+              alt="JPAY Logo" 
+              className={`transition-all duration-200 ${collapsed ? "h-8 w-8" : "h-8 w-auto"}`}
+            />
+            {!collapsed && isAdmin && (
+              <Shield className="h-5 w-5 text-primary" />
             )}
           </div>
         </div>
